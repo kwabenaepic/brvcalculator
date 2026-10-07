@@ -1,98 +1,165 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { NavButton } from '@/components/nav-button';
+import { CompartmentsSection } from '@/components/transit-loss/compartments-section';
+import { SaveRecordButton } from '@/components/transit-loss/save-record-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { TotalsSection } from '@/components/transit-loss/totals-section';
+import { VcfSection } from '@/components/transit-loss/vcf-section';
+import { VehicleInfoSection } from '@/components/transit-loss/vehicle-info-section';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useSession } from '@/hooks/use-session';
+import { useTheme } from '@/hooks/use-theme';
+import { useTransitLossCalculator } from '@/hooks/use-transit-loss-calculator';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function TransitLossCalculatorScreen() {
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { session, isAdmin, signOut } = useSession();
+  const {
+    regNumberInput,
+    setRegNumberInput,
+    vehicleDetails,
+    vehicleLookupStatus,
+    vehicleDataSource,
+    vehicleSavedAt,
+    showOfflineExpiredWarning,
+    lookupVehicle,
+    loadedUllageInputs,
+    setLoadedUllage,
+    receivedUllageInputs,
+    setReceivedUllage,
+    loadedTemperatureInput,
+    setLoadedTemperatureInput,
+    loadedDensityInput,
+    setLoadedDensityInput,
+    receivedTemperatureInput,
+    setReceivedTemperatureInput,
+    receivedDensityInput,
+    setReceivedDensityInput,
+    summary,
+    saveRecord,
+    saveStatus,
+  } = useTransitLossCalculator();
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ThemedView
+        style={[
+          styles.headerWrapper,
+          { backgroundColor: theme.surface, borderBottomColor: theme.border, paddingTop: insets.top },
+        ]}>
+        <ThemedView type="surface" style={styles.headerInner}>
+          <ThemedView type="surface" style={styles.headerRow}>
+            <ThemedText type="title" style={styles.title}>
+              Transit Loss Calculator
+            </ThemedText>
+            <ThemedView type="surface" style={styles.headerActions}>
+              {isAdmin ? <NavButton label="Vehicles" href="/admin-vehicles" /> : null}
+              <NavButton label="History" href="/history" />
+              {session ? (
+                <NavButton label="Sign Out" onPress={signOut} tone="muted" />
+              ) : (
+                <NavButton label="Admin Sign In" href="/sign-in" tone="muted" />
+              )}
+            </ThemedView>
+          </ThemedView>
         </ThemedView>
+      </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <ScrollView
+        style={[styles.flex, { backgroundColor: theme.contentBackground }]}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + Spacing.three }]}>
+        <ThemedView type="contentBackground" style={styles.container}>
+          <VehicleInfoSection
+            regNumber={regNumberInput}
+            onChangeRegNumber={setRegNumberInput}
+            onLookup={lookupVehicle}
+            vehicleDetails={vehicleDetails}
+            lookupStatus={vehicleLookupStatus}
+            dataSource={vehicleDataSource}
+            savedAt={vehicleSavedAt}
+            showOfflineExpiredWarning={showOfflineExpiredWarning}
+          />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+          <CompartmentsSection
+            compartments={vehicleDetails?.compartments ?? []}
+            loadedUllageValues={loadedUllageInputs}
+            onChangeLoadedUllage={setLoadedUllage}
+            loadedVolumes={summary.loadedCompartmentVolumes}
+            receivedUllageValues={receivedUllageInputs}
+            onChangeReceivedUllage={setReceivedUllage}
+            receivedVolumes={summary.receivedCompartmentVolumes}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
+
+          <TotalsSection summary={summary} />
+
+          <VcfSection
+            loadedTemperatureInput={loadedTemperatureInput}
+            onChangeLoadedTemperature={setLoadedTemperatureInput}
+            loadedDensityInput={loadedDensityInput}
+            onChangeLoadedDensity={setLoadedDensityInput}
+            receivedTemperatureInput={receivedTemperatureInput}
+            onChangeReceivedTemperature={setReceivedTemperatureInput}
+            receivedDensityInput={receivedDensityInput}
+            onChangeReceivedDensity={setReceivedDensityInput}
+            summary={summary}
           />
+
+          <SaveRecordButton disabled={!vehicleDetails} status={saveStatus} onPress={saveRecord} />
         </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  contentContainer: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  },
+  container: {
+    maxWidth: MaxContentWidth,
+    flexGrow: 1,
+    width: '100%',
     gap: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+  },
+  headerWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+  },
+  headerInner: {
+    maxWidth: MaxContentWidth,
+    width: '100%',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.three,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    rowGap: Spacing.two,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+    fontSize: 28,
+    lineHeight: 34,
   },
 });

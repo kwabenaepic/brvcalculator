@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build && cp dist/+not-found.html dist/404.html",
+  "outputDirectory": "dist",
+  "cleanUrls": true
+}

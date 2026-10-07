@@ -1,6 +1,7 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * The app's color palette. The app is light-only by design: it stays light
+ * even when the device is in dark mode (see also `userInterfaceStyle` in
+ * app.json and `color-scheme` in global.css).
  */
 
 import '@/global.css';
@@ -8,23 +9,30 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
+  text: '#000000',
+  /** Page background behind cards. */
+  background: '#F2F4F7',
+  contentBackground: '#F2F4F7',
+  /** Cards, inputs, list rows — anything that sits on the page. */
+  surface: '#FFFFFF',
+  backgroundElement: '#FFFFFF',
+  backgroundSelected: '#ECEEF1',
+  /** Card outlines and dividers. */
+  border: '#E4E7EC',
+  /** Text-input outlines — stronger than card borders so fields stand out. */
+  inputBorder: '#D0D5DD',
+  textSecondary: '#6B6F76',
+  accent: '#3c87f7',
+  accentBackground: '#EAF2FE',
+  loadedAccent: '#3c87f7',
+  receivedAccent: '#e8871e',
+  negative: '#D14343',
+  positive: '#1E8E3E',
+  warning: '#8A5A00',
+  warningBackground: '#FDF0D5',
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColor = keyof typeof Colors;
 
 export const Fonts = Platform.select({
   ios: {
